@@ -563,7 +563,9 @@ var tgs = (function() {
     timerDetails.suspendDateTime = new Date(
       new Date().getTime() + timeToSuspend
     );
+    gsUtils.warning(tab.id, 'Setting autoSuspend timer for tab. Timeout: ' + timeToSuspend);
     timerDetails.timer = setTimeout(async () => {
+      gsUtils.log(tab.id, 'AutoSuspend timer reached timeout');
       const updatedTabId = timerDetails.tabId; // This may get updated via updateTabIdReferences
       const updatedTab = await gsChrome.tabsGet(updatedTabId);
       if (!updatedTab) {
@@ -573,14 +575,18 @@ var tgs = (function() {
       gsTabSuspendManager.queueTabForSuspension(updatedTab, 3);
     }, timeToSuspend);
 
+    gsUtils.log(tab.id, 'Setting autoSuspend timer for tab:', timerDetails);
     setTabStatePropForTabId(tab.id, STATE_TIMER_DETAILS, timerDetails);
   }
 
   function resetAutoSuspendTimerForAllTabs() {
+    gsUtils.warning('background', 'Resetting autoSuspend timer for all tabs');
     chrome.tabs.query({}, tabs => {
       for (const tab of tabs) {
         if (gsUtils.isNormalTab(tab)) {
           resetAutoSuspendTimerForTab(tab);
+        } else {
+          gsUtils.log(tab.id, 'Ignoring timer reset for non-normal tab');
         }
       }
     });
@@ -589,8 +595,10 @@ var tgs = (function() {
   function clearAutoSuspendTimerForTab(tab) {
     const timerDetails = getTabStatePropForTabId(tab.id, STATE_TIMER_DETAILS);
     if (!timerDetails) {
+      gsUtils.log(tab.id, 'Could not find timerDetails for tab');
       return;
     }
+    gsUtils.log(tab.id, 'Clearing timerDetails for tab:', timerDetails);
     clearTimeout(timerDetails.timer);
     setTabStatePropForTabId(tab.id, STATE_TIMER_DETAILS, null);
   }
@@ -1251,6 +1259,10 @@ var tgs = (function() {
           tabInfo
         ) {
           if (error) {
+            // This can happen if extension is restarted. Existing normal tabs
+            // will no longer have a running content script. However the suspend
+            // time will still activate. I think it is too resource intensive to
+            // try to reinject content scripts into these tabs on extension restart.
             gsUtils.warning(tab.id, 'Failed to getDebugInfo', error);
           }
           if (tabInfo) {
