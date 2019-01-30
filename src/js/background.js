@@ -437,6 +437,7 @@ var tgs = (function() {
   }
 
   function suspendAllTabs(force) {
+    gsUtils.log('background', 'Suspending all tabs in current window');
     const forceLevel = force ? 1 : 2;
     getCurrentlyActiveTab(activeTab => {
       if (!activeTab) {
@@ -457,6 +458,7 @@ var tgs = (function() {
   }
 
   function suspendAllTabsInAllWindows(force) {
+    gsUtils.log('background', 'Suspending all tabs in all windows');
     const forceLevel = force ? 1 : 2;
     chrome.tabs.query({}, tabs => {
       for (const tab of tabs) {
@@ -513,6 +515,7 @@ var tgs = (function() {
   }
 
   function suspendSelectedTabs() {
+    gsUtils.log('background', 'Suspending selected tabs');
     chrome.tabs.query(
       { highlighted: true, lastFocusedWindow: true },
       selectedTabs => {
@@ -1561,6 +1564,7 @@ var tgs = (function() {
 
   function addCommandListeners() {
     chrome.commands.onCommand.addListener(function(command) {
+      gsUtils.log('Command received: ' + command);
       if (command === '1-suspend-tab') {
         toggleSuspendedStateOfHighlightedTab();
       } else if (command === '2-toggle-temp-whitelist-tab') {

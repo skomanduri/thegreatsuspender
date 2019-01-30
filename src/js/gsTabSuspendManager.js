@@ -33,6 +33,7 @@ var gsTabSuspendManager = (function() {
   }
 
   function queueTabForSuspension(tab, forceLevel) {
+    gsUtils.warning(tab.id, 'queueing tab for suspension');
     queueTabForSuspensionAsPromise(tab, forceLevel).catch(e => {
       gsUtils.log(tab.id, e);
     });
