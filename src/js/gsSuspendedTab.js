@@ -53,6 +53,41 @@ var gsSuspendedTab = (function() {
     const isLowContrastFavicon = faviconMeta.isDark;
     setTheme(tabView.document, theme, isLowContrastFavicon);
 
+    //add hotkey listener
+    //responds to various keys to match Vimium
+    tabView.window.addEventListener('keypress', function(event) {
+        var nextPrevTab = function(dir) {
+            chrome.tabs.query({currentWindow: true}, function(tabs) {
+                var i = 0; while(!tabs[i].active) { i++; };
+                chrome.tabs.update(tabs[(i+tabs.length+dir) % tabs.length].id, {active: true});
+            });
+        };
+
+        switch ( event.key ) {
+        case 'J':
+            nextPrevTab(-1);
+            break;
+        case 'K':
+            nextPrevTab(1);
+            break;
+        case 'x':
+            chrome.tabs.getCurrent( function (tab) {
+                chrome.tabs.remove(tab.id);
+            });
+            break;
+        case 't':
+            chrome.tabs.getCurrent( function (tab) {
+                currentTabId = tab.id;
+                currentTabIndex = tab.index;
+                chrome.tabs.create({
+                    index: currentTabIndex + 1,
+                    openerTabId: currentTabId
+                });
+            });
+            break;
+        }
+    });
+
     // Set showNag
     if (
       !options[gsStorage.NO_NAG] &&
